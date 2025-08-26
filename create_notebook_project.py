@@ -4,6 +4,7 @@ import logging
 import shutil
 import subprocess
 import sys
+import re
 from pathlib import Path
 from typing import Dict, Union
 
@@ -82,6 +83,66 @@ def initialize_project_environment(project_path: Path) -> None:
     run_command(["uv", "add", "ipykernel"], cwd=project_path)
 
 
+def update_pyproject(project_dir: Path, name: str, description: str, author: str) -> None:
+    """
+    Update [project] section in pyproject.toml with name, description, and authors.
+    Uses simple line-level edits to avoid extra dependencies.
+    """
+    pyproject = project_dir / "pyproject.toml"
+    if not pyproject.exists():
+        logging.warning("pyproject.toml not found; skipping metadata update.")
+        return
+
+    text = pyproject.read_text(encoding="utf-8")
+    lines = text.splitlines()
+
+    # Locate [project] section boundaries
+    proj_start = None
+    proj_end = len(lines)
+    for i, line in enumerate(lines):
+        if line.strip() == "[project]":
+            proj_start = i
+            break
+    if proj_start is None:
+        logging.warning("[project] section not found in pyproject.toml; skipping metadata update.")
+        return
+
+    for j in range(proj_start + 1, len(lines)):
+        if lines[j].strip().startswith("[") and lines[j].strip().endswith("]"):
+            proj_end = j
+            break
+
+    def set_or_replace(key: str, value: str):
+        nonlocal lines, proj_start, proj_end
+        pattern = re.compile(rf"^\s*{re.escape(key)}\s*=\s*.*$")
+        for k in range(proj_start + 1, proj_end):
+            if pattern.match(lines[k]):
+                lines[k] = f'{key} = "{value}"'
+                return True
+        # If not found, insert just after [project]
+        lines.insert(proj_start + 1, f'{key} = "{value}"')
+        proj_end += 1
+        return False
+
+    # Update name and description
+    set_or_replace("name", name)
+    set_or_replace("description", description)
+
+    # Authors: set to array of tables with name only
+    authors_pattern = re.compile(r"^\s*authors\s*=\s*\[")
+    authors_set = False
+    for k in range(proj_start + 1, proj_end):
+        if authors_pattern.match(lines[k]):
+            lines[k] = f"authors = [{{ name = \"{author}\" }}]"
+            authors_set = True
+            break
+    if not authors_set:
+        lines.insert(proj_start + 1, f"authors = [{{ name = \"{author}\" }}]")
+        proj_end += 1
+
+    pyproject.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    logging.info("Updated pyproject.toml with project metadata.")
+
 def parse_arguments() -> argparse.Namespace:
     """
     Parses command-line arguments.
@@ -99,14 +160,20 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "-a",
         "--author",
-        default="Your Name",
-        help="Author name (default: 'Your Name').",
+        default="James O'Reilly",
+        help="Author name (default: 'James O\'Reilly').",
     )
     parser.add_argument(
         "-d",
         "--description",
         default="A Jupyter notebook-based project.",
         help="Project description.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        help="Directory where the new project should be created.",
     )
 
     args = parser.parse_args()
@@ -118,6 +185,20 @@ def parse_arguments() -> argparse.Namespace:
             parser.error("the following arguments are required: -n/--name")
 
     return args
+
+
+def find_dev_root(start: Path) -> Path:
+    """
+    Search upwards from 'start' for a folder named 'dev'. If not found,
+    use %USERPROFILE%/dev if it exists; otherwise, return start.parent.
+    """
+    for ancestor in [start] + list(start.parents):
+        if ancestor.name.lower() == "dev":
+            return ancestor
+    home_dev = Path.home() / "dev"
+    if home_dev.exists():
+        return home_dev
+    return start.parent
 
 
 def prepare_template_directory(templates_base_dir: Path, template_folder: str) -> Path:
@@ -141,8 +222,17 @@ def main():
     """
     args = parse_arguments()
 
-    # Define the base path where all templates are stored
-    templates_base_dir = Path.cwd() / "cookiecutter-project-templates"
+    # Anchor paths to the script location (robust regardless of CWD)
+    script_dir = Path(__file__).resolve().parent
+
+    # Resolve output directory (default to nearest 'dev')
+    default_output_dir = find_dev_root(script_dir)
+    output_dir: Path = args.output_dir or default_output_dir
+    output_dir.mkdir(parents=True, exist_ok=True)
+    logging.info(f"Using output directory: {output_dir}")
+
+    # Define the base path where all templates are stored (inside repo)
+    templates_base_dir = script_dir / "cookiecutter-project-templates"
     templates_base_dir.mkdir(parents=True, exist_ok=True)
 
     # Prepare the template directory
@@ -159,12 +249,16 @@ def main():
                     "author_name": args.author,
                     "description": args.description,
                 },
+                output_dir=str(output_dir),
             )
         )
         logging.info(f"Project created at: {project_dir}")
 
         # Initialize the project environment
         initialize_project_environment(project_dir)
+
+        # Ensure pyproject.toml reflects chosen metadata
+        update_pyproject(project_dir, args.name, args.description, args.author)
         logging.info("Project environment initialized successfully.")
 
     except Exception as e:

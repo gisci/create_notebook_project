@@ -1,26 +1,90 @@
-# create_notebook_project
-A simple Python project setup template using Cookiecutter to automate directory structure creation and environment management. This template includes folders for data and source code, a Jupyter notebook, and integrates with uv for easy virtual environment setup and package management.
+# Minimal Viable Notebook Project (Windows)
 
-## Instructions
+A small, clonable utility for creating engineering notebook projects quickly. It:
+- scaffolds a simple Jupyter-friendly project using Cookiecutter (data/, src/, README, blank notebook)
+- initializes a local Python environment with uv and installs ipykernel
+- updates pyproject.toml with the chosen project name, description, and author (default: "James O'Reilly")
 
-1. **Clone or download the repository**: Place the files in the root folder where you want to set up your new project.
+Everything is self-contained in this repo, including Cookiecutter templates.
 
-2. **Install dependencies**: 
-   - Make sure you have `cookiecutter` and `uv` installed.
-   - If not, you can install them via pip:
-     ```bash
-     pip install cookiecutter uv
-     ```
+## Clonable design
+- Templates live inside this repo at `cookiecutter-project-templates` and are created automatically on first use.
+- The Windows launcher `new_notebook_project.bat` sits next to the Python script and finds it via a relative path, so you can clone this repo anywhere.
+- By default, new projects are created under:
+  - Personal: `%USERPROFILE%\dev`
+  - KP: `%USERPROFILE%\dev\kp-dev`
+  The launcher creates these folders if they don't exist.
 
-3. **Run the script**:
-   Navigate to the directory where you placed the files and run the script:
-   ```bash
-   python create_notebook_project.py
-   ```
-4. **Customize the project name**: The script will prompt you for a project name. Provide your preferred name, and it will generate the project structure based on the template.
+## Prerequisites (Windows)
+- Python 3.10+ with the `py` launcher (recommended from python.org)
+- uv (Python environment and package manager)
+- cookiecutter (Python package)
 
-5. **Environment Setup**: Once the project structure is created, the script will initialize a uv virtual environment and set up Jupyter notebook integration automatically.
+Install suggestions:
+- cookiecutter (user install):
+  ```powershell
+  py -3 -m pip install --user cookiecutter
+  ```
+- uv (choose one):
+  - Official installer:
+    ```powershell
+    iwr https://astral.sh/uv/install.ps1 -UseBasicParsing | iex
+    ```
+  - Or via pip (works, but installer is preferred):
+    ```powershell
+    py -3 -m pip install --user uv
+    ```
 
-6. **Start working**: Your project is now ready! Navigate to the generated project directory and start adding your code and data.
+## How to use
+You can use either the batch launcher or the Python CLI.
 
-Fore more Python for Engineering content, check out [flocode.substack.com](https://flocode.substack.com/)
+### Option A: Windows launcher (recommended)
+- Run (double-click or from a terminal):
+  `new_notebook_project.bat`
+- Choose:
+  - 1) Personal Project  -> `%USERPROFILE%\dev`
+  - 2) KP Project        -> `%USERPROFILE%\dev\kp-dev`
+- Enter Project Name and Description when prompted.
+
+The tool will:
+1) Scaffold the project under the chosen output folder
+2) Run `uv init` in that project and install `ipykernel`
+3) Update `pyproject.toml` with name, description, and authors = [{ name = "James O'Reilly" }]
+
+### Option B: Python CLI (if you prefer the terminal)
+From this repo directory:
+```powershell
+py -3 .\create_notebook_project.py -n "MyProject" -d "Short description" -o "$env:USERPROFILE\dev"
+```
+Flags:
+- `-n/--name` Project name (required if not prompted)
+- `-d/--description` Project description
+- `-a/--author` Author (default: James O'Reilly)
+- `-o/--output-dir` Where to create the new project. If omitted, defaults to the nearest `dev` folder (or `%USERPROFILE%\dev`).
+
+## Where the environment lives
+- `uv init` runs inside the project directory, so the virtual environment is created in the project (commonly `.venv`).
+- `ipykernel` is installed into that environment so your notebooks can use the project interpreter.
+
+Tip: In VS Code, use "Python: Select Interpreter" and choose the interpreter from your project's `.venv`.
+
+## Cookiecutter templates location
+- Templates are stored under: `<repo>\cookiecutter-project-templates`.
+- The folder is created and maintained by the script; you do not need a separate templates directory in `dev`.
+
+## Troubleshooting
+- "Access is denied" when selecting menu options in the batch file: ensure you are using the provided launcher (it escapes `>` correctly). Running it from any directory is fine.
+- `py` not found: ensure Python from python.org is installed, or replace `py -3` with `python` in commands.
+- `uv` not found: install uv using one of the methods above.
+- `cookiecutter` not found: install it with `py -3 -m pip install --user cookiecutter`.
+
+## Publishing to GitHub and sensitive info
+- This repo does not contain secrets by default.
+- Generated projects and their virtual environments are separate from this repo.
+- `.gitignore` includes common environment folders (`.venv`, etc.). We've also added ignores for uv artifacts.
+- Before pushing, quickly review your changes and avoid committing any generated project folders into this repo.
+
+If you later publish generated projects, review those repos independently for secrets.
+
+---
+For more Python for Engineering content, see: https://flocode.substack.com/
