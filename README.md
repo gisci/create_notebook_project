@@ -1,4 +1,6 @@
-# Minimal Viable Notebook Project (Windows)
+# Minimal Viable Notebook Project 
+
+This project is discussed in more detail in the Flocode Newsletter - [ADD LINK]
 
 A small, clonable utility for creating engineering notebook projects quickly. It:
 - scaffolds a simple Jupyter-friendly project using Cookiecutter (data/, src/, README, blank notebook)
@@ -7,12 +9,19 @@ A small, clonable utility for creating engineering notebook projects quickly. It
 
 Everything is self-contained in this repo, including Cookiecutter templates.
 
+## Dev Folder Structure
+This tool creates and organizes your development projects in a structured way:
+- **Personal projects**: Created in `%USERPROFILE%\dev` (e.g., `C:\Users\YourName\dev`)
+- **Work projects**: Created in `%USERPROFILE%\dev\work-dev` (e.g., `C:\Users\YourName\dev\work-dev`)
+
+These folders are automatically created if they don't exist when you run the tool. This keeps your personal and work projects organized in separate directories under your user profile.
+
 ## Clonable design
 - Templates live inside this repo at `cookiecutter-project-templates` and are created automatically on first use.
 - The Windows launcher `new_notebook_project.bat` sits next to the Python script and finds it via a relative path, so you can clone this repo anywhere.
 - By default, new projects are created under:
   - Personal: `%USERPROFILE%\dev`
-  - KP: `%USERPROFILE%\dev\kp-dev`
+  - Work: `%USERPROFILE%\dev\work-dev`
   The launcher creates these folders if they don't exist.
 
 ## Prerequisites (Windows)
@@ -43,7 +52,7 @@ You can use either the batch launcher or the Python CLI.
   `new_notebook_project.bat`
 - Choose:
   - 1) Personal Project  -> `%USERPROFILE%\dev`
-  - 2) KP Project        -> `%USERPROFILE%\dev\kp-dev`
+  - 2) Work Project      -> `%USERPROFILE%\dev\work-dev`
 - Enter Project Name and Description when prompted.
 
 The tool will:
