@@ -1,6 +1,6 @@
 # Minimal Viable Notebook Project 
 
-This project is discussed in more detail in the Flocode Newsletter - [ADD LINK]
+This project is discussed in more detail in the Flocode Newsletter - [#081 | Reducing Friction: The Minimal Notebook Project Tool](https://flocode.substack.com/p/081-reducing-friction-the-minimal)
 
 A small, clonable utility for creating engineering notebook projects quickly. It:
 - scaffolds a simple Jupyter-friendly project using Cookiecutter (data/, src/, README, blank notebook)
