@@ -160,8 +160,8 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "-a",
         "--author",
-        default="James O'Reilly",
-        help="Author name (default: 'James O\'Reilly').",
+        default="Giovanni",
+        help="Author name (default: 'Giovanni\'Sc').",
     )
     parser.add_argument(
         "-d",
